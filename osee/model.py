@@ -23,7 +23,7 @@ def get_model_name(model_size: ModelSize, model_type: ModelType):
     return "-".join(parts)
 
 
-class OcrModel:
+class OCRModel:
     def __init__(self, model: VisionEncoderDecoderModel, processor: TrOCRProcessor):
         self.model = model
         self.processor = processor
