@@ -62,7 +62,7 @@ def get_seq2seq_trainer(
     return trainer
 
 
-class Trainer:
+class OCRTrainer:
     def __init__(
         self,
         model: OCRModel,
