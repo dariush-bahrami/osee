@@ -1,2 +1,2 @@
-from .model import OcrModel
+from .model import OCRModel
 from .train import OCRTrainer
