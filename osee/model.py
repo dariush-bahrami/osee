@@ -1,8 +1,10 @@
 from enum import Enum
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+from typing import NamedTuple
 
 
 class ModelSize(Enum):
@@ -23,6 +25,11 @@ def get_model_name(model_size: ModelSize, model_type: ModelType):
     return "-".join(parts)
 
 
+class OCRModelResult(NamedTuple):
+    text: str
+    score: float
+
+
 class OCRModel:
     def __init__(self, model: VisionEncoderDecoderModel, processor: TrOCRProcessor):
         self.model = model
@@ -31,12 +38,17 @@ class OCRModel:
     def __call__(self, image: Image) -> str:
         image = image.convert("RGB")
         pixel_values = self.processor(image, return_tensors="pt").pixel_values
-        generated_ids = self.model.generate(pixel_values)
-        generated_text = self.processor.batch_decode(
-            generated_ids,
+        generated_result = self.model.generate(
+            pixel_values,
+            output_scores=True,
+            return_dict_in_generate=True,
+        )
+        generated_text = self.processor.decode(
+            generated_result.sequences[0],
             skip_special_tokens=True,
         )
-        return generated_text[0]
+        score = np.exp(generated_result.sequences_scores[0].item())
+        return OCRModelResult(generated_text, score)
 
     def save(self, save_directory: Path) -> "OCRModel":
         self.model.save_pretrained(save_directory)
