@@ -1,14 +1,14 @@
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from typing import Iterable
+from typing import Iterable, Tuple
 from transformers import TrOCRProcessor
 
 
 class TrOCRDataset(Dataset):
     def __init__(
         self,
-        data: Iterable[tuple[Image.Image, str]],
+        data: Iterable[Tuple[Image.Image, str]],
         processor: TrOCRProcessor,
         max_target_length: int,
     ):
