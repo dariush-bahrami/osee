@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Tuple
 
 from datasets import load_metric
 from PIL import Image
@@ -20,7 +20,8 @@ def get_seq2seq_trainer(
     logging_steps: int,
     save_steps: int,
     eval_steps: int,
-    num_train_epochs: int,
+    max_steps: int,
+    dataloader_num_workers: int,
 ) -> Seq2SeqTrainer:
     training_args = Seq2SeqTrainingArguments(
         predict_with_generate=True,
@@ -32,7 +33,8 @@ def get_seq2seq_trainer(
         logging_steps=logging_steps,
         save_steps=save_steps,
         eval_steps=eval_steps,
-        num_train_epochs=num_train_epochs,
+        max_steps=max_steps,
+        dataloader_num_workers=dataloader_num_workers,
     )
 
     cer_metric = load_metric("cer")
@@ -66,15 +68,16 @@ class OCRTrainer:
     def __init__(
         self,
         model: OCRModel,
-        train_data: Iterable[tuple[Image.Image, str]],
-        eval_data: Iterable[tuple[Image.Image, str]],
+        train_data: Iterable[Tuple[Image.Image, str]],
+        eval_data: Iterable[Tuple[Image.Image, str]],
         max_target_length: int,
         batch_size: int,
         output_dir: Path,
         logging_steps: int,
         save_steps: int,
         eval_steps: int,
-        num_train_epochs: int,
+        max_steps: int,
+        dataloader_num_workers: int,
     ):
         self.model = model
         self.train_dataset = TrOCRDataset(
@@ -93,10 +96,10 @@ class OCRTrainer:
         self.logging_steps = logging_steps
         self.save_steps = save_steps
         self.eval_steps = eval_steps
-        self.num_train_epochs = num_train_epochs
-
+        self.max_steps = max_steps
+        self.dataloader_num_workers = dataloader_num_workers
         self.hugging_face_trainer = get_seq2seq_trainer(
-            self.model,
+            self.model.model,
             self.model.processor,
             self.train_dataset,
             self.eval_dataset,
@@ -105,7 +108,8 @@ class OCRTrainer:
             self.logging_steps,
             self.save_steps,
             self.eval_steps,
-            self.num_train_epochs,
+            self.max_steps,
+            self.dataloader_num_workers,
         )
 
     def train(self):
